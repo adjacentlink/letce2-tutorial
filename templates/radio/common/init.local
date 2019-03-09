@@ -1,0 +1,163 @@
+#!/bin/bash -
+#
+# Copyright (c) 2016-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of Adjacent Link LLC nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+top_dir=$1
+node_name=$2
+start_time=$3
+
+echo "top_dir: $top_dir"
+echo "node_name: $node_name"
+echo "start_time: $start_time"
+
+cd "$top_dir/$node_name"
+
+# load common functions
+. ./functions
+
+if [ -f ./node-prestart ]
+then
+    bash ./node-prestart $node_name
+fi
+
+if [ -f platform.xml ] &&
+       [ ! -f NO-emane ]
+then
+    start_emane \
+        $node_name \
+        platform.xml \
+        $top_dir/persist/$node_name/var/log/emane.log \
+        $top_dir/persist/$node_name/var/run/emane.pid \
+        $top_dir/persist/$node_name/var/run/emane.uuid
+fi
+
+if [ -f transportdaemon.xml ] &&
+       [ ! -f NO-transportdaemon ]
+then
+    start_emanetransportd \
+        $node_name \
+        transportdaemon.xml \
+        $top_dir/persist/$node_name/var/log/emanetransportd.log \
+        $top_dir/persist/$node_name/var/run/emanetransportd.pid \
+        $top_dir/persist/$node_name/var/run/emanetransportd.uuid
+fi
+
+% if waveform_interface:
+    wait_for_device $node_name ${waveform_interface} 30
+% else:
+    sleep 4
+%endif
+
+if [ -f eventdaemon.xml ] &&
+       [ ! -f NO-emaneeventd ]
+then
+    start_emaneeventd_and_wait_for_gpspty \
+        $node_name \
+        eventdaemon.xml \
+        $top_dir/persist/$node_name/var/log/emaneeventd.log  \
+        $top_dir/persist/$node_name/var/run/emaneeventd.pid  \
+        $top_dir/persist/$node_name/var/run/emaneeventd.uuid \
+        $top_dir/persist/$node_name/var/run/gps.pty
+
+    start_gpsd \
+        $node_name \
+        $top_dir/persist/$node_name/var/run/gps.pty \
+        $top_dir/persist/$node_name/var/run/gpsd.pid
+fi
+
+if [ -f olsr.conf ] &&
+       [ ! -f NO-olsr ]
+then
+    start_olsr \
+        $node_name \
+        olsr.conf \
+        $top_dir/persist/$node_name/var/log/olsr.log
+
+    wait_for_device $node_name bmf0 30
+fi
+
+if [ -f otestpoint-recorder.xml ] &&
+       [ ! -f NO-otestpoint-recorder ]
+then
+    start_otestpoint_recorder \
+        $node_name \
+        otestpoint-recorder.xml \
+        $top_dir/persist/$node_name/var/log/otestpoint-recorder.log \
+        $top_dir/persist/$node_name/var/run/otestpoint-recorder.pid \
+        $top_dir/persist/$node_name/var/run/otestpoint-recorder.uuid
+fi
+
+if [ -f otestpoint.xml ] &&
+       [ ! -f NO-otestpointd ]
+then
+    start_otestpointd \
+        $node_name \
+        otestpoint.xml \
+        $top_dir/persist/$node_name/var/log/otestpointd.log \
+        $top_dir/persist/$node_name/var/run/otestpointd.pid \
+        $top_dir/persist/$node_name/var/run/otestpointd.uuid
+fi
+
+if [ -f ./node-preapplication ]
+then
+
+    bash ./node-preapplication $node_name
+fi
+
+if [ -f mgen ] &&
+       [ ! -f NO-mgen ]
+then
+
+    start_mgen \
+        $node_name \
+        mgen \
+        $top_dir/persist/$node_name/var/log/mgen.out \
+        $top_dir/persist/$node_name/var/run/mgen.pid \
+        $top_dir/persist/$node_name/var/log/mgen.log \
+        "$starttime"
+fi
+
+if [ -f iperf ] &&
+       [ ! -f NO-iperf ]
+then
+
+    start_iperf \
+        $node_name \
+        iperf \
+        $top_dir/persist/$node_name/var/log/iperf.log \
+        $top_dir/persist/$node_name/var/run/iperf.pid \
+        "$starttime"
+fi
+
+if [ -f ./node-poststart ]
+then
+    bash ./node-poststart $node_name
+fi

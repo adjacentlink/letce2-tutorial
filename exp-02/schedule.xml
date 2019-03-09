@@ -1,0 +1,23 @@
+<%
+nem_ids = set()
+for node,items in __share.items():
+    if 'nem_id' in items:
+        nem_ids.add(int(items['nem_id']))
+%>
+<emane-tdma-schedule >
+  <structure frames="1"
+             slots="${len(nem_ids)}"
+             slotoverhead="0"
+             slotduration="1500"
+             bandwidth="1M"/>
+  <multiframe frequency="${frequency_hz}"
+              power="0"
+              class="3"
+              datarate="11M">
+    <frame index="0">
+% for index,nem_id in enumerate(sorted(list(nem_ids))):
+      <slot index="${index}" nodes="${nem_id}"/>
+% endfor
+    </frame>
+  </multiframe>
+</emane-tdma-schedule>

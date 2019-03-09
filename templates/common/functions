@@ -1,0 +1,373 @@
+#!/bin/bash -
+#
+# Copyright (c) 2014-2017 - Adjacent Link LLC, Bridgewater, New Jersey
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of Adjacent Link LLC nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+start_emane()
+{
+    local node_name=$1
+    local xml=$2
+    local logfile=$3
+    local pidfile=$4
+    local uuidfile=$5
+
+    if [ -f $xml ]; then
+
+        echo "$node_name: starting emane: $xml"
+
+        emane "$xml" -r -d -l 2 -f "$logfile" \
+              --pidfile "$pidfile" --uuidfile "$uuidfile"
+
+        retval=$?
+    else
+        echo "$node_name: missing emane XML: $xml [!!]"
+        retval=1
+    fi
+
+    return $retval
+}
+
+start_mgen()
+{
+    local node_name=$1
+    local mgeninput=$2
+    local mgenoutput=$3
+    local pidfile=$4
+    local logfile=$5
+    local starttime="$6"
+
+    local startoption=""
+
+    if [ -n "$starttime" ]; then
+        startoption="start $(date --date "$starttime" "+%H:%M:%S" --utc)GMT"
+        echo "$node_name: starting mgen input $mgeninput output $mgenoutput $startoption"
+    else
+        echo "$node_name: starting mgen input $mgeninput output $mgenoutput now"
+    fi
+
+    nohup mgen             \
+          input $mgeninput   \
+          output $mgenoutput \
+          $startoption       \
+          txlog &> $logfile &
+
+    echo $! > $pidfile
+}
+
+start_otestpointd()
+{
+    local node_name=$1
+    local xml=$2
+    local logfile=$3
+    local pidfile=$4
+    local uuidfile=$5
+
+    if [ -f $xml ]; then
+
+        echo "$node_name: starting otestpointd: $xml"
+
+        otestpointd "$xml" -d -l 3 -f "$logfile" \
+                    --pidfile "$pidfile" --uuidfile "$uuidfile"
+
+        retval=$?
+    else
+        echo "$node_name: missing otestpointd XML: $xml [!!]"
+        retval=1
+    fi
+
+    return $retval
+}
+
+
+start_otestpoint_recorder()
+{
+    local node_name=$1
+    local xml=$2
+    local logfile=$3
+    local pidfile=$4
+    local uuidfile=$5
+
+    if [ -f $xml ]; then
+
+        echo "$node_name: starting otestpoint-recorder: $xml"
+
+        otestpoint-recorder "$xml" -d -l 3 -f "$logfile" \
+                            --pidfile "$pidfile" --uuidfile "$uuidfile"
+
+        retval=$?
+    else
+        echo "$node_name: missing otestpoint-recorder XML: $xml [!!]"
+        retval=1
+    fi
+
+    return $retval
+}
+
+start_otestpoint_broker()
+{
+    local node_name=$1
+    local xml=$2
+    local logfile=$3
+    local pidfile=$4
+    local uuidfile=$5
+
+    if [ -f $xml ]
+    then
+        echo "$node_name: starting otestpoint-broker: $xml"
+
+        otestpoint-broker "$xml" -d -l 3 -f "$logfile" \
+                          --pidfile "$pidfile" --uuidfile "$uuidfile"
+
+        retval=$?
+    else
+        echo "$node_name: missing otestpoint-broker XML: $xml [!!]"
+        retval=1
+    fi
+
+    return $retval
+}
+
+start_iperf()
+{
+    local node_name=$1
+    local inputfile=$2
+    local logfile=$3
+    local pidfile=$4
+    local starttime="$5"
+
+    # iperf servers do not wait for start time
+    if (! grep -q '\-s ' $inputfile)
+    then
+        start=$(date --date "$starttime" "+%s")
+
+        while [[ $(date "+%s") -lt $start ]]
+        do
+            sleep 1
+        done
+    fi
+
+    echo "$node_name starting iperf: $inputfile at $starttime"
+
+    nohup iperf $(head -n 1 $inputfile) &> $logfile &
+
+    echo $! > $pidfile
+}
+
+
+wait_for_device()
+{
+    local node_name=$1
+    local device=$2
+    local timeout=$3
+    local waited=0
+
+    echo "$node_name: waiting for $device"
+
+    while(! route -n | grep -q $device); do
+
+        if [ $waited -lt $timeout ]; then
+            sleep 1
+            waited=$(($waited + 1))
+        else
+            echo "$node_name: $device not found [!!]"
+            return 1
+        fi
+    done
+
+    echo "$node_name: $device found"
+    return 0
+}
+
+wait_for_device_ip_link()
+{
+    local node_name=$1
+    local device=$2
+    local timeout=$3
+    local waited=0
+
+    echo "$node_name: waiting for $device"
+
+    while(! ip link show $device &> /dev/null); do
+
+        if [ $waited -lt $timeout ]; then
+            sleep 1
+            waited=$(($waited + 1))
+        else
+            echo "$node_name: $device not found [!!]"
+            return 1
+        fi
+    done
+
+    echo "$node_name: $device found"
+    return 0
+}
+
+wait_for_tcp_service()
+{
+    local node_name=$1
+    local port=$2
+    local timeout=$3
+    local waited=0
+
+
+    echo "$node_name: waiting for TCP service port $port"
+
+    while(! netstat -tpan | grep -q $port); do
+
+        if [ $waited -lt $timeout ]; then
+            sleep 1
+            waited=$(($waited + 1))
+        else
+            echo "$node_name: port $port not found [!!]"
+            return 1
+        fi
+    done
+
+
+    echo "$node_name: port $port found"
+    return 0
+}
+
+load_arp_cache()
+{
+    local node_name=$1
+    local device=$2
+    local ethers=$3
+
+    echo "$node_name: load_arp_cache $ethers $device"
+
+    arp -i $device -f "$ethers"
+}
+
+start_emaneeventd_and_wait_for_gpspty()
+{
+    local node_name=$1
+    local xml=$2
+    local logfile=$3
+    local pidfile=$4
+    local uuidfile=$5
+    local pty=$6
+
+    if [ -f $xml ]; then
+
+        echo "$node_name: starting emaneeventd: $xml"
+
+        rm -f "$pty"
+
+        emaneeventd -r -d "$xml" -l 3 -f "$logfile" \
+                    --pidfile "$pidfile" --uuidfile "$uuidfile"
+
+        retval=$?
+
+        if [[ $retval == 0 ]]; then
+
+
+            while (! test -f "$pty")
+            do
+                echo "$node_name: Waiting for GPS Locatopn PTY: $pty"
+                sleep 1
+            done
+        fi
+
+    else
+        echo "$node_name: missing emaneeventd XML: $xml [!!]"
+        retval=1
+    fi
+
+    return $retval
+}
+
+start_gpsd()
+{
+    local node_name=$1
+    local pty=$2
+    local pidfile=$3
+
+    echo "$node_name: starting gpsd: $pty"
+    gpsd -P $pidfile -G -n -b `cat $pty`
+}
+
+wait_for_gpspty()
+{
+    local node_name=$1
+    local pty=$2
+
+    echo "$node_name: waiting for GPS Locatopn PTY: $pty"
+
+    while (! test -f "$pty")
+    do
+        sleep 1
+    done
+    echo "$node_name: found GPS Locatopn PTY: $pty"
+    return $0
+}
+
+start_emaneeventservice()
+{
+    local node_name=$1
+    local xml=$2
+    local logfile=$3
+    local pidfile=$4
+    local uuidfile=$5
+    local starttime="$6"
+
+    local startoption=""
+
+    if [ -n "$starttime" ]; then
+        startoption="--starttime $(date --date "$starttime" "+%H:%M:%S")"
+    fi
+
+    if [ -f $xml ]
+    then
+        echo "$node_name: starting emaneeventservice: $xml at $starttime"
+
+        emaneeventservice -d "$xml" -l 3 -f "$logfile" \
+                          --pidfile "$pidfile" --uuidfile "$uuidfile" \
+                          $startoption
+
+        retval=$?
+    else
+
+        echo "$node_name: missing emaneeventservice XML: $xml [!!]"
+
+        retval=1
+    fi
+
+    return $retval
+}
+
+start_olsr()
+{
+    local node_name=$1
+    local routingconf=$2
+    local logfile=$3
+    echo "$node_name: starting olsr: $routingconf"
+    olsrd -f "$routingconf" &> "$logfile"
+}
