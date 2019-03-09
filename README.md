@@ -193,7 +193,7 @@ Python expression:
 
 ```
 @param_1=10
-@square_param_a=@eval{str(int(%(@param_a)s) * int(%(@param_a)s))}
+@square_param_a=@eval{str(int(%(@param_1)s) * int(%(@param_1)s))}
 ```
 
 # Generating Experiment Configuration
