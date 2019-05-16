@@ -31,12 +31,15 @@ then
         $top_dir/persist/host/var/run/otestpoint-broker.uuid
 fi
 
-now=$(date "+%s")
-start=$(date --date "$start_time"  "+%s")
+if [ -f schedule.xml ]
+   then
+       now=$(date "+%s")
+       start=$(date --date "$start_time"  "+%s")
 
-if [[ $start > $now ]]
-then
-    echo "host: TDMA schedule publish delayed until $start"
-    sleep $(($start - $now))
-    emaneevent-tdmaschedule schedule.xml -i ${experiment_control_interface}
+       if [[ $start > $now ]]
+       then
+           echo "host: TDMA schedule publish delayed until $start"
+           sleep $(($start - $now))
+           emaneevent-tdmaschedule schedule.xml -i ${experiment_control_interface}
+       fi
 fi
