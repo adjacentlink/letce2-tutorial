@@ -1,0 +1,18 @@
+#!/bin/bash -
+<%
+from letce2.utils.network import CIDRNotation
+%>
+
+top_dir=$1
+node_name=$2
+start_time=$3
+
+echo "top_dir: $top_dir"
+echo "node_name: $node_name"
+echo "start_time: $start_time"
+
+cd "$top_dir/$node_name"
+
+% if gateway_ip_addr:
+route add default gw ${CIDRNotation.address(gateway_ip_addr)}
+% endif
