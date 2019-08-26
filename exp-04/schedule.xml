@@ -1,0 +1,35 @@
+<%
+def si_int(val):
+    if val[-1] == 'K':
+        val = 1000 * float(val[:-1])
+    elif  val[-1] == 'M':
+        val = 1000000 * float(val[:-1])
+    elif val[-1] == 'G':
+        val = 1000000000 * float(val[:-1])
+    return int(val)
+
+nem_ids = set()
+for node,items in __share.items():
+    if 'nem_id' in items and 'is_tdma' in items and items['is_tdma'] == '1':
+        nem_ids.add(int(items['nem_id']))
+%>
+<emane-tdma-schedule >
+  <structure frames="10"
+             slots="${len(nem_ids)}"
+             slotoverhead="0"
+             slotduration="1500"
+             bandwidth="1M"/>
+  <multiframe frequency="${si_int(frequency_hz)}"
+              power="0"
+              class="3"
+              datarate="11M">
+% for frame in range(0,10):    
+   <frame index="${frame}"
+          frequency="${si_int(frequency_hz) + frame * si_int(frequency_increment_hz)}">
+% for index,nem_id in enumerate(sorted(list(nem_ids))):
+      <slot index="${index}" nodes="${nem_id}"/>
+% endfor
+    </frame>
+% endfor
+  </multiframe>
+</emane-tdma-schedule>

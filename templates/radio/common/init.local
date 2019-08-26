@@ -59,6 +59,17 @@ then
         $top_dir/persist/$node_name/var/run/emane.uuid
 fi
 
+if [ -f emane-spectrum-monitor.xml ] &&
+       [ ! -f NO-emane-spectrum-monitor ]
+then
+    start_emane_spectrum_monitor \
+        $node_name \
+        emane-spectrum-monitor.xml \
+        $top_dir/persist/$node_name/var/log/emane-spectrum-monitor.log \
+        $top_dir/persist/$node_name/var/run/emane-spectrum-monitor.pid \
+        $top_dir/persist/$node_name/var/run/emane-spectrum-monitor.uuid
+fi
+
 if [ -f transportdaemon.xml ] &&
        [ ! -f NO-transportdaemon ]
 then

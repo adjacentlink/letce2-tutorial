@@ -54,6 +54,30 @@ start_emane()
     return $retval
 }
 
+start_emane_spectrum_monitor()
+{
+    local node_name=$1
+    local xml=$2
+    local logfile=$3
+    local pidfile=$4
+    local uuidfile=$5
+
+    if [ -f $xml ]; then
+
+        echo "$node_name: starting emane-spectrum-monitor: $xml"
+
+        emane-spectrum-monitor --config "$xml" -r -d -l 3 -f "$logfile" \
+              --pidfile "$pidfile" --uuidfile "$uuidfile"
+
+        retval=$?
+    else
+        echo "$node_name: missing emane-spectrum-monitor XML: $xml [!!]"
+        retval=1
+    fi
+
+    return $retval
+}
+
 start_mgen()
 {
     local node_name=$1

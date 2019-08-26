@@ -18,7 +18,7 @@ input files used by a separate test control system:
 
 * exp-00: 5 node EMANE IEEE 802.11abg configuration generation.
 
-Experiments 01, 02 and 03 are runnable experiments that use the letce2
+Experiments 01 through 04 are runnable experiments that use the letce2
 LXC experiment control plugin, [letce2-plugin-lxc][3], which adds
 features and templates necessary to define and execute experiments:
 
@@ -29,7 +29,11 @@ features and templates necessary to define and execute experiments:
 * exp-03: 2 node EMANE IEEE 802.11abg experiment with a host
           application container hanging off each radio container.
 
+* exp-04: 10 node EMANE IEEE 802.11abg and TDMA experiment featuring
+        [emane-spectrum-tools][9].
+
 [3]: https://github.com/adjacentlink/letce2-plugin-lxc
+[9]: https://github.com/adjacentlink/emane-spectrum-tools
 
 In order to run the example experiments, you must install letce2 and
 letce2-plugin-lxc either from source or from pre-built binaries
