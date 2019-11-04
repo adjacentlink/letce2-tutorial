@@ -1,0 +1,162 @@
+#!/usr/bin/env python
+#
+# Copyright (c) 2018-2019 - Adjacent Link LLC, Bridgewater, New Jersey
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of Adjacent Link LLC nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# See toplevel COPYING for more information.
+#
+from __future__ import absolute_import, division, print_function
+
+from argparse import ArgumentParser
+import numpy as np
+from otestpoint.labtools import Stream, Delta, View, WindowAverage
+
+argument_parser = ArgumentParser()
+
+argument_parser.add_argument('endpoint',
+                             type=str,
+                             help="OpenTestPoint publish endpoint.")
+
+argument_parser.add_argument('-t',
+                             '--table',
+                             action='store_true',
+                             dest='table',
+                             help='show table not plot [default: %(default)s].')
+
+ns = argument_parser.parse_args()
+
+args = vars(ns)
+
+stream = Stream(args['endpoint'],
+                'EMANE.IEEE80211abg.Counters.General')
+
+varProcessedConfiguration = stream.variable('Measurement_emane_ieee80211abg_counters_general',
+                                            'processedconfiguration')
+
+varProcessedDownstreamControl = stream.variable('Measurement_emane_ieee80211abg_counters_general',
+                                                'processeddownstreamcontrol')
+
+varProcessedDownstreamPackets = stream.variable('Measurement_emane_ieee80211abg_counters_general',
+                                                'processeddownstreampackets')
+
+varProcessedEvents = stream.variable('Measurement_emane_ieee80211abg_counters_general',
+                                     'processedevents')
+
+varProcessedTimedEvents = stream.variable('Measurement_emane_ieee80211abg_counters_general',
+                                          'processedtimedevents')
+
+varProcessedUpstreamControl = stream.variable('Measurement_emane_ieee80211abg_counters_general',
+                                              'processedupstreamcontrol')
+
+varProcessedUpstreamPackets = stream.variable('Measurement_emane_ieee80211abg_counters_general',
+                                              'processedupstreampackets')
+
+varAvgTimedEventLatency = stream.variable('Measurement_emane_ieee80211abg_counters_general',
+                                          'avgtimedeventlatency')
+
+varAvgProcessAPIQueueWait = stream.variable('Measurement_emane_ieee80211abg_counters_general',
+                                            'avgprocessapiqueuewait')
+
+varAvgProcessAPIQueueDepth = stream.variable('Measurement_emane_ieee80211abg_counters_general',
+                                             'avgprocessapiqueuedepth')
+
+varAvgTimedEventLatencyRatio = stream.variable('Measurement_emane_ieee80211abg_counters_general',
+                                               'avgtimedeventlatencyratio')
+
+model = stream.model(WindowAverage(varAvgTimedEventLatency,(varProcessedTimedEvents,)),
+                     WindowAverage(varAvgProcessAPIQueueWait,(varProcessedConfiguration,
+                                                              varProcessedDownstreamControl,
+                                                              varProcessedDownstreamPackets,
+                                                              varProcessedEvents,
+                                                              varProcessedTimedEvents,
+                                                              varProcessedUpstreamControl,
+                                                              varProcessedUpstreamPackets)),
+                     WindowAverage(varAvgProcessAPIQueueDepth,(varProcessedConfiguration,
+                                                               varProcessedDownstreamControl,
+                                                               varProcessedDownstreamPackets,
+                                                               varProcessedEvents,
+                                                               varProcessedTimedEvents,
+                                                               varProcessedUpstreamControl,
+                                                               varProcessedUpstreamPackets)),
+                     WindowAverage(varAvgTimedEventLatencyRatio,(varProcessedTimedEvents,)),
+                     labels=['AvgTimedEventLatency',
+                             'AvgProcessAPIQueueWait',
+                             'AvgProcessAPIQueueDepth',
+                             'AvgTimedEventLatencyRatio'],
+                     by_tag=True)
+
+# start the data stream
+stream.run()
+
+if args['table']:
+    import time
+    import pandas as pd
+
+    event_prev = 0
+
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.expand_frame_repr', False)
+
+    while True:
+        df,event_cur,(_,timestamp) = model.data()
+
+        if event_cur != event_prev:
+            print("\x1b[2J\x1b[H",time.strftime('%a, %d %b %Y %H:%M:%S',
+                                                time.localtime(timestamp)))
+            print(df)
+
+            event_prev = event_cur
+
+        time.sleep(1)
+else:
+    # view the model
+    view = View(model,
+                kind='line',
+                title='API Statistics')
+
+    view.show(View.Plot(*['node-{}:AvgTimedEventLatency'.format(x) for x in range(1,11)],
+                        title='AvgTimedEventLatency',
+                        ylabel='usecs',
+                        ylim=(0,500),
+                        legend=True),
+              View.Plot(*['node-{}:AvgTimedEventLatencyRatio'.format(x) for x in range(1,11)],
+                        title='AvgTimedEventLatencyRadio',
+                        ylim=(0,2),
+                        legend=False),
+              View.Plot(*['node-{}:AvgProcessAPIQueueWait'.format(x) for x in range(1,11)],
+                        title='AvgProcessAPIQueueWait',
+                        ylabel='usecs',
+                        ylim=(0,250),
+                        legend=False),
+              View.Plot(*['node-{}:AvgProcessAPIQueueDepth'.format(x) for x in range(1,11)],
+                        title='AvgProcessAPIQueueDepth',
+                        ylabel='msgs',
+                        ylim=(0,5),
+                        legend=False))
