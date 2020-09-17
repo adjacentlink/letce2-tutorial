@@ -42,7 +42,7 @@ start_emane()
 
         echo "$node_name: starting emane: $xml"
 
-        emane "$xml" -r -d -l 2 -f "$logfile" \
+        emane "$xml" -r -d -l 3 -f "$logfile" \
               --pidfile "$pidfile" --uuidfile "$uuidfile"
 
         retval=$?
@@ -85,12 +85,12 @@ start_mgen()
     local mgenoutput=$3
     local pidfile=$4
     local logfile=$5
-    local starttime="$6"
+    local start_utc="$6"
 
     local startoption=""
 
-    if [ -n "$starttime" ]; then
-        startoption="start $(date --date "$starttime" "+%H:%M:%S" --utc)GMT"
+    if [ -n "$start_utc" ]; then
+        startoption="start $(date --date "$start_utc" "+%H:%M:%S" --utc)GMT"
         echo "$node_name: starting mgen input $mgeninput output $mgenoutput $startoption"
     else
         echo "$node_name: starting mgen input $mgeninput output $mgenoutput now"
@@ -214,7 +214,7 @@ wait_for_device()
 
     echo "$node_name: waiting for $device"
 
-    while(! route -n | grep -q $device); do
+    while(! ip route show | grep -q $device); do
 
         if [ $waited -lt $timeout ]; then
             sleep 1
