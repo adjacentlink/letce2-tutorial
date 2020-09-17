@@ -146,14 +146,13 @@ fi
 if [ -f mgen ] &&
        [ ! -f NO-mgen ]
 then
-
     start_mgen \
         $node_name \
         mgen \
         $top_dir/persist/$node_name/var/log/mgen.out \
         $top_dir/persist/$node_name/var/run/mgen.pid \
         $top_dir/persist/$node_name/var/log/mgen.log \
-        "$starttime"
+        "$start_time"
 fi
 
 if [ -f iperf ] &&
@@ -165,7 +164,7 @@ then
         iperf \
         $top_dir/persist/$node_name/var/log/iperf.log \
         $top_dir/persist/$node_name/var/run/iperf.pid \
-        "$starttime"
+        "$start_time"
 fi
 
 if [ -f ./node-poststart ]
