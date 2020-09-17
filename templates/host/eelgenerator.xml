@@ -7,5 +7,6 @@
       <item value="location,velocity,orientation:eelloaderlocation:delta"/>
       <item value="pathloss:eelloaderpathloss:delta"/>
       <item value="antennaprofile:eelloaderantennaprofile:delta"/>
+      <item value="fadingselection:eelloaderfadingselection:delta"/>
     </paramlist>
 </eventgenerator>
