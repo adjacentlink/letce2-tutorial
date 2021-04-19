@@ -26,7 +26,7 @@ features and templates necessary to define and execute experiments:
 
 * exp-02: 10 node TDMA Event Scheduler experiment.
 
-* exp-03: 2 node EMANE IEEE 802.11abg experiment with a host
+* exp-03: 3 node EMANE IEEE 802.11abg experiment with a host
           application container hanging off each radio container.
 
 * exp-04: 10 node EMANE IEEE 802.11abg and TDMA experiment featuring
@@ -90,6 +90,30 @@ The exp-<INDEX> directories contain:
 * experiment.cfg: Experiment configuration. In this tutorial this is a
   single file. Nothing precludes you from using multiple files to
   define various parts of your experiment.
+
+## Address Scheme
+
+LXC container radio nodes have two interfaces: *backchan0* and
+*emane0*. The *backchan0* interface is used as the back-channel
+control interface as well as the Over-The-Air and Event Channel
+interface. The *emane0* interface is the radio interface. Experiments
+using batman-adv will as see a *bat0* interface as the radio
+interface, with the *emane0* interface attached.
+
+|Test Node|Back Channel Address|Radio Interface Address|
+|---------|--------------------|-----------------------|
+| 1       | 10.99.0.1          | 10.100.0.1            |
+| 2       | 10.99.0.2          | 10.100.0.2            |
+| 3       | 10.99.0.3          | 10.100.0.3            |
+| 4       | 10.99.0.4          | 10.100.0.4            |
+| 5       | 10.99.0.5          | 10.100.0.5            |
+| 6       | 10.99.0.6          | 10.100.0.6            |
+| 7       | 10.99.0.7          | 10.100.0.7            |
+| 8       | 10.99.0.8          | 10.100.0.8            |
+| 9       | 10.99.0.9          | 10.100.0.9            |
+| 10      | 10.99.0.10         | 10.100.0.10           |
+
+exp-04 has a more complex topology see exp-04/README.md for details.
 
 ## Basic Syntax
 
@@ -243,6 +267,25 @@ command:
 
 ```
 [me@host] letce2 lxc stop
+```
+
+# MANET Routing Protocol
+
+The experiments in this tutorial use batman-adv but can be configured
+to use [OLSR](https://github.com/OLSR/olsrd). Modify the following
+section(s) of the respective experiment's `experiment.cfg` to switch
+protocols. Commented/uncomment `__template.file.200` appropriately.
+
+```
+# to use olsr uncomment:
+# __template.file.200=olsr.conf
+#  and comment:
+# __template.file.200=batman-adv
+#
+# v-- comment/uncomment --v
+#__template.file.200=olsr.conf
+__template.file.200=batman-adv
+# ^-- comment/uncomment --^
 ```
 
 # Looking for Something More Formal
