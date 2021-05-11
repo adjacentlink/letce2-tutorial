@@ -11,7 +11,8 @@ batctl meshif ${batman_interface} interface add ${waveform_interface}
 batctl meshif ${batman_interface} orig_interval ${batman_orig_interval}
 %endif
 
-ifconfig ${batman_interface} ${radio_ip_addr}
+ip addr add ${radio_ip_addr} dev ${batman_interface}
+ip link set ${batman_interface} up
 
 if [ -f batman-routes ]
 then
