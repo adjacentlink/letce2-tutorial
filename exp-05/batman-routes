@@ -1,0 +1,30 @@
+#!/bin/bash -
+
+node_name=$1
+
+if [ -f batman-adv ]
+then
+    if (! route -6 | grep -q  fd00:cc8f:61ff:1::)
+    then
+        echo "$node_name: ip -6 route add fd00:cc8f:61ff:1::/64 via ::ffff:10.100.0.1 dev bat0"
+	ip -6 route add ::ffff:10.100.0.1 dev bat0
+	ip -6 route add fd00:cc8f:61ff:1::/64 via ::ffff:10.100.0.1 dev bat0
+	ip -6 neigh add ::ffff:10.100.0.1 lladdr 02:02:00:00:01:01 dev bat0
+    fi
+    
+    if (! route -6 | grep -q fd00:cc8f:61ff:2:: )
+    then
+        echo "$node_name: ip -6 route add fd00:cc8f:61ff:2::/64 via ::ffff:10.100.0.2 dev bat0"
+	ip -6 route add ::ffff:10.100.0.2 dev bat0
+	ip -6 route add fd00:cc8f:61ff:2::/64 via ::ffff:10.100.0.2 dev bat0
+	ip -6 neigh add ::ffff:10.100.0.2 lladdr 02:02:00:00:02:02 dev bat0
+    fi
+    
+    if (! route -6 | grep -q fd00:cc8f:61ff:3:: )
+    then
+        echo "$node_name: ip -6 route add fd00:cc8f:61ff:3::/64 via ::ffff:10.100.0.3 dev bat0"
+        ip -6 route add ::ffff:10.100.0.3 dev bat0
+        ip -6 route add fd00:cc8f:61ff:3::/64 via ::ffff:10.100.0.3 dev bat0
+        ip -6 neigh add ::ffff:10.100.0.3 lladdr 02:02:00:00:03:03 dev bat0
+    fi
+fi

@@ -32,6 +32,10 @@ features and templates necessary to define and execute experiments:
 * exp-04: 10 node EMANE IEEE 802.11abg and TDMA experiment featuring
         [emane-spectrum-tools][9].
 
+* exp-05: 3 node EMANE IEEE 802.11abg experiment with a host
+          application container hanging off of each radio container
+          using IPv6 host addresses.
+
 [3]: https://github.com/adjacentlink/letce2-plugin-lxc
 [9]: https://github.com/adjacentlink/emane-spectrum-tools
 

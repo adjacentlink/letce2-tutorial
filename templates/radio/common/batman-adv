@@ -12,6 +12,11 @@ batctl meshif ${batman_interface} orig_interval ${batman_orig_interval}
 %endif
 
 ip addr add ${radio_ip_addr} dev ${batman_interface}
+
+%if batman_mac_addr:
+ip link set dev ${batman_interface} address ${batman_mac_addr}
+%endif
+
 ip link set ${batman_interface} up
 
 if [ -f batman-routes ]
