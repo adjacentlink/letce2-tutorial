@@ -22,4 +22,7 @@ from letce2.utils.network import CIDRNotation
     <python module="otestpoint.iproute.routing"
             class="Routing"/>
   </probe>
+  <probe configuration="otestpoint-probe-mgen.xml">
+    <python module="otestpoint.mgen.flows" class="Flows"/>
+  </probe>
 </otestpoint>

@@ -4,16 +4,27 @@
   <transport definition="transvirtual.xml"/>
   <mac definition="ieee80211abg_mac.xml"/>
   <phy>
+    %if bandwidth_hz:
+    <param name="bandwidth" value="${bandwidth_hz}"/>
+    %else:
     <param name="bandwidth" value="20M"/>
+    %endif
     <param name="frequency" value="${frequency_hz}"/>
     <param name="frequencyofinterest" value="${frequency_hz}"/>
     <param name="subid" value="${sub_id}"/>
     <param name="systemnoisefigure" value="4.0"/>
     <param name="txpower" value="0.0"/>
     <param name="fixedantennagain" value="0.0"/>
+    % if fixedantennagainenable:
+    <param name="fixedantennagainenable" value="${fixedantennagainenable}"/>
+    %else:
     <param name="fixedantennagainenable" value="on"/>
+    %endif
     <param name="noisemode" value="outofband"/>
     <param name="noisebinsize" value="20"/>
     <param name="propagationmodel" value="precomputed"/>
+    %if spectralmaskindex:
+    <param name="spectralmaskindex" value="${spectralmaskindex}"/>
+    %endif
   </phy>
 </nem>

@@ -8,7 +8,7 @@ The Lightweight Experiment Template Configuration Environment
 experiment configuration using the [Mako][2] template engine.
 
 [1]: https://github.com/adjacentlink/letce2
-[2]: https://https://www.makotemplates.org
+[2]: https://www.makotemplates.org
 
 This tutorial provides a set of experiments to introduce how to use
 letce2:

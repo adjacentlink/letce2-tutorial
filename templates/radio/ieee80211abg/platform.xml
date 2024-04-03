@@ -10,7 +10,17 @@ from letce2.utils.network import CIDRNotation
   <param name="eventservicegroup" value="224.1.2.8:45703"/>
   <param name="eventservicedevice" value="${control_interface}"/>
   <param name="controlportendpoint" value="0.0.0.0:47000"/>
-
+  %if otamanagermtu:
+  <param name="otamanagermtu" value="${otamanagermtu}"/>
+  %endif
+  %if stats_ota_maxpacketcountrow:
+  <param name="stats.ota.maxpacketcountrows" value="${stats_ota_maxpacketcountrow}"/>
+  %endif
+  
+  %if spectralmaskmanifesturi:
+  <param name="spectralmaskmanifesturi" value="${spectralmaskmanifesturi}"/>
+  %endif
+  
   <nem definition="ieee80211abg_nem.xml" id="${nem_id}">
     <transport definition="transvirtual.xml">
       <param name="device" value="${waveform_interface}"/>

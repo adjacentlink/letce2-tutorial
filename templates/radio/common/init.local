@@ -155,6 +155,16 @@ fi
 if [ -f mgen ] &&
        [ ! -f NO-mgen ]
 then
+% if mgen_monitor_listen_address and mgen_monitor_listen_port:
+    start_mgen_monitor \
+        $node_name \
+        ${mgen_monitor_listen_address} \
+        ${mgen_monitor_listen_port} \
+        $top_dir/persist/$node_name/var/log/mgen.out \
+        $top_dir/persist/$node_name/var/run/mgen-monitor.pid \
+        $top_dir/persist/$node_name/var/log/mgen-monitor.log
+% endif
+    
     start_mgen \
         $node_name \
         mgen \

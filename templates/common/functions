@@ -97,13 +97,37 @@ start_mgen()
     fi
 
     nohup mgen             \
+          ipv4 \
           input $mgeninput   \
           output $mgenoutput \
+          flush \
           $startoption       \
           txlog &> $logfile &
 
     echo $! > $pidfile
 }
+
+
+start_mgen_monitor()
+{
+    local node_name=$1
+    local address=$2
+    local port=$3
+    local mgenoutput=$4
+    local pidfile=$5
+    local logfile=$6
+
+    echo "$node_name: starting mgen-monitor $address $port $mgenoutput"
+
+    mgen-monitor \
+        -d \
+        --log-file $logfile \
+        --pid-file $pidfile \
+        $address \
+        $port \
+        $mgenoutput
+}
+
 
 start_otestpointd()
 {
@@ -117,7 +141,7 @@ start_otestpointd()
 
         echo "$node_name: starting otestpointd: $xml"
 
-        otestpointd "$xml" -d -l 3 -f "$logfile" \
+        otestpointd "$xml" -r -d -l 3 -f "$logfile" \
                     --pidfile "$pidfile" --uuidfile "$uuidfile"
 
         retval=$?
